@@ -432,17 +432,17 @@ export const WRAPPED_NATIVE_CURRENCY: { [chainId: number]: Token | undefined } =
   ),
   [SupportedChainId.ETHW]: new Token(
     SupportedChainId.ETHW,
-    '0xaf3ccfD9B59b36628cC2F659a09d6440795B2520',
+    '0x7bf88d2c0e32de92cdaf2d43ccdc23e8edfd5990',
     18,
     'ETHW',
-    'ETH native asset'
+    'Wrapped EthereumPoW'
   ),
   [SupportedChainId.ETHW_ICEBERG]: new Token(
     SupportedChainId.ETHW_ICEBERG,
-    '0xaf3ccfD9B59b36628cC2F659a09d6440795B2520',
+    '0x7bf88d2c0e32de92cdaf2d43ccdc23e8edfd5990',
     18,
-    'ETHW',
-    'ETH native asset'
+    'WETHW',
+    'Wrapped EthereumPoW'
   ),
 }
 
@@ -465,6 +465,11 @@ function isMatic(chainId: number): chainId is SupportedChainId.POLYGON | Support
   return chainId === SupportedChainId.POLYGON_MUMBAI || chainId === SupportedChainId.POLYGON
 }
 
+function isETHWoP(chainId: number): chainId is SupportedChainId.ETHW | SupportedChainId.ETHW_ICEBERG {
+  return chainId === SupportedChainId.ETHW || chainId === SupportedChainId.ETHW_ICEBERG
+}
+
+
 class MaticNativeCurrency extends NativeCurrency {
   equals(other: Currency): boolean {
     return other.isNative && other.chainId === this.chainId
@@ -482,6 +487,25 @@ class MaticNativeCurrency extends NativeCurrency {
     super(chainId, 18, 'MATIC', 'Polygon Matic')
   }
 }
+
+class ETHWNativeCurrency extends NativeCurrency {
+  equals(other: Currency): boolean {
+    return other.isNative && other.chainId === this.chainId
+  }
+
+  get wrapped(): Token {
+    if (!isETHWoP(this.chainId)) throw new Error('Not ethereum WoP')
+    const wrapped = WRAPPED_NATIVE_CURRENCY[this.chainId]
+    invariant(wrapped instanceof Token)
+    return wrapped
+  }
+
+  public constructor(chainId: number) {
+    if (!isETHWoP(chainId)) throw new Error('Not ethereum WoP')
+    super(chainId, 18, 'ETHW', 'Ethereum WoP')
+  }
+}
+
 
 export class ExtendedEther extends Ether {
   public get wrapped(): Token {
@@ -505,8 +529,8 @@ export function nativeOnChain(chainId: number): NativeCurrency | Token {
     nativeCurrency = new MaticNativeCurrency(chainId)
   } else if (isCelo(chainId)) {
     nativeCurrency = getCeloNativeCurrency(chainId)
-  } else if (chainId === SupportedChainId.ETHW){
-    nativeCurrency = WRAPPED_NATIVE_CURRENCY[chainId] as Token;
+  } else if (isETHWoP(chainId)) {
+    nativeCurrency = new ETHWNativeCurrency(chainId)
   }
   else {
     nativeCurrency = ExtendedEther.onChain(chainId)

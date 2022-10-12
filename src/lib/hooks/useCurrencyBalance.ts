@@ -3,10 +3,9 @@ import { Currency, CurrencyAmount, Token } from '@uniswap/sdk-core'
 import { useWeb3React } from '@web3-react/core'
 import ERC20ABI from 'abis/erc20.json'
 import { Erc20Interface } from 'abis/types/Erc20'
-import { SupportedChainId } from 'constants/chains'
 import JSBI from 'jsbi'
 import { useMultipleContractSingleData, useSingleContractMultipleData } from 'lib/hooks/multicall'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 
 import { nativeOnChain } from '../../constants/tokens'
 import { useInterfaceMulticall } from '../../hooks/useContract'
@@ -32,6 +31,7 @@ export function useNativeCurrencyBalances(uncheckedAddresses?: (string | undefin
         : [],
     [uncheckedAddresses]
   )
+  
   const results = useSingleContractMultipleData(multicallContract, 'getEthBalance', validAddressInputs)
 
   return useMemo(
@@ -61,6 +61,7 @@ export function useTokenBalancesWithLoadingIndicator(
     [tokens]
   )
   const validatedTokenAddresses = useMemo(() => validatedTokens.map((vt) => vt.address), [validatedTokens])
+
   const balances = useMultipleContractSingleData(
     validatedTokenAddresses,
     ERC20Interface,
@@ -115,25 +116,19 @@ export function useCurrencyBalances(
     () => currencies?.filter((currency): currency is Token => currency?.isToken ?? false) ?? [],
     [currencies]
   )
-  const {chainId} = useWeb3React();
-  const isETHWNative = useCallback((currency: any) => {
-    if(chainId === SupportedChainId.ETHW && (currency?.symbol === "ETHW" || currency?.symbol === "ETH")) return true;
-    return false;
-  },[chainId])
- 
   const tokenBalances = useTokenBalances(account, tokens)
-  const containsETH: boolean = useMemo(() => currencies?.some((currency) => currency?.isNative || isETHWNative(currency)) ?? false, [currencies, isETHWNative])
+  const containsETH: boolean = useMemo(() => currencies?.some((currency) => currency?.isNative) ?? false, [currencies])
   const ethBalance = useNativeCurrencyBalances(useMemo(() => (containsETH ? [account] : []), [containsETH, account]))
 
   return useMemo(
     () =>
       currencies?.map((currency:any) => {
         if (!account || !currency) return undefined
-        if (currency.isToken && !isETHWNative(currency)) return tokenBalances[currency.address]
-        if (currency.isNative || isETHWNative(currency)) return ethBalance[account]
+        if (currency.isToken) return tokenBalances[currency.address]
+        if (currency.isNative) return ethBalance[account]
         return undefined
       }) ?? [],
-    [account, currencies, ethBalance, tokenBalances,isETHWNative]
+    [account, currencies, ethBalance, tokenBalances]
   )
 }
 

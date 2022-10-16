@@ -369,7 +369,6 @@ export const UNI: { [chainId: number]: Token } = {
   [SupportedChainId.GOERLI]: new Token(SupportedChainId.GOERLI, UNI_ADDRESS[5], 18, 'UNI', 'Uniswap'),
   [SupportedChainId.KOVAN]: new Token(SupportedChainId.KOVAN, UNI_ADDRESS[42], 18, 'UNI', 'Uniswap'),
   [SupportedChainId.ETHW]: new Token(SupportedChainId.ETHW, UNI_ADDRESS[1], 18, 'UNI', 'Uniswap'),
-
 }
 
 export const WRAPPED_NATIVE_CURRENCY: { [chainId: number]: Token | undefined } = {
@@ -432,14 +431,14 @@ export const WRAPPED_NATIVE_CURRENCY: { [chainId: number]: Token | undefined } =
   ),
   [SupportedChainId.ETHW]: new Token(
     SupportedChainId.ETHW,
-    '0x7bf88d2c0e32de92cdaf2d43ccdc23e8edfd5990',
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     18,
     'ETHW',
     'Wrapped EthereumPoW'
   ),
   [SupportedChainId.ETHW_ICEBERG]: new Token(
     SupportedChainId.ETHW_ICEBERG,
-    '0x7bf88d2c0e32de92cdaf2d43ccdc23e8edfd5990',
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     18,
     'WETHW',
     'Wrapped EthereumPoW'
@@ -468,7 +467,6 @@ function isMatic(chainId: number): chainId is SupportedChainId.POLYGON | Support
 function isETHWoP(chainId: number): chainId is SupportedChainId.ETHW | SupportedChainId.ETHW_ICEBERG {
   return chainId === SupportedChainId.ETHW || chainId === SupportedChainId.ETHW_ICEBERG
 }
-
 
 class MaticNativeCurrency extends NativeCurrency {
   equals(other: Currency): boolean {
@@ -506,7 +504,6 @@ class ETHWNativeCurrency extends NativeCurrency {
   }
 }
 
-
 export class ExtendedEther extends Ether {
   public get wrapped(): Token {
     const wrapped = WRAPPED_NATIVE_CURRENCY[this.chainId]
@@ -531,8 +528,7 @@ export function nativeOnChain(chainId: number): NativeCurrency | Token {
     nativeCurrency = getCeloNativeCurrency(chainId)
   } else if (isETHWoP(chainId)) {
     nativeCurrency = new ETHWNativeCurrency(chainId)
-  }
-  else {
+  } else {
     nativeCurrency = ExtendedEther.onChain(chainId)
   }
   return (cachedNativeCurrency[chainId] = nativeCurrency)
